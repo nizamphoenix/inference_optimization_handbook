@@ -781,7 +781,7 @@ On MPS, graph compilation and Metal dispatch differ from CUDA graphs; use Instru
 
 ## 4.5 Speculative Decoding
 
-A draft model proposes \(\gamma\) tokens. The target verifies them in parallel.
+A draft model proposes $\gamma$ tokens. The target verifies them in parallel.
 
 ```mermaid
 sequenceDiagram
@@ -793,19 +793,19 @@ sequenceDiagram
     T-->>D: Accept prefix and correct rejection
 ```
 
-For independent mean acceptance probability \(\alpha\), the expected number of accepted **draft** tokens is:
+For independent mean acceptance probability $\alpha$, the expected number of accepted **draft** tokens is:
 
-\[
+$$
 E[\text{accepted draft}]=\frac{\alpha(1-\alpha^\gamma)}{1-\alpha}
-\]
+$$
 
 The expected output progress per target verification, including the correction or bonus token, is:
 
-\[
+$$
 E[\text{output progress}]=\frac{1-\alpha^{\gamma+1}}{1-\alpha}
-\]
+$$
 
-At \(\alpha=1\), use the limits \(E[\text{accepted draft}]=\gamma\) and \(E[\text{output progress}]=\gamma+1\).
+At $\alpha=1$, use the limits $E[\text{accepted draft}]=\gamma$ and $E[\text{output progress}]=\gamma+1$.
 
 It reduces serial target calls, not necessarily FLOPs. It helps when:
 
