@@ -210,28 +210,28 @@ MPS may still allocate Metal buffers, perform blits, or materialize non-contiguo
 
 Arithmetic intensity is:
 
-\[
+$$
 I=\frac{\text{operations}}{\text{bytes moved}}
-\]
+$$
 
 The roofline upper bound is:
 
-\[
+$$
 P_{attainable}\leq\min(P_{peak},I\times BW_{peak})
-\]
+$$
 
 Equivalently, runtime cannot beat:
 
-\[
+$$
 t\geq\max\left(\frac{F}{P_{peak}},\frac{Q}{BW_{peak}}\right)
-\]
+$$
 
 where:
 
-- \(F\) is work in FLOPs.
-- \(Q\) is traffic in bytes at the memory level being studied.
-- \(P_{peak}\) is peak math throughput.
-- \(BW_{peak}\) is peak bandwidth.
+- $F$ is work in FLOPs.
+- $Q$ is traffic in bytes at the memory level being studied.
+- $P_{peak}$ is peak math throughput.
+- $BW_{peak}$ is peak bandwidth.
 
 Always name the memory level. HBM roofline and PCIe roofline answer different questions.
 
@@ -260,41 +260,41 @@ Always name the memory level. HBM roofline and PCIe roofline answer different qu
 
 ## 2.1 Attention Shapes
 
-For a decoder layer with hidden states \(X\in\mathbb{R}^{B\times T\times d_{model}}\):
+For a decoder layer with hidden states $X\in\mathbb{R}^{B\times T\times d_{model}}$:
 
-\[
+$$
 Q=XW^Q,\quad K=XW^K,\quad V=XW^V
-\]
+$$
 
 After splitting heads:
 
-\[
+$$
 Q\in\mathbb{R}^{B\times H_q\times T\times d_h}
-\]
+$$
 
-\[
+$$
 K,V\in\mathbb{R}^{B\times H_{kv}\times T\times d_h}
-\]
+$$
 
-For query head \(h\), let \(g(h)\) select its KV head:
+For query head $h$, let $g(h)$ select its KV head:
 
-\[
+$$
 A_h=\operatorname{softmax}\left(\frac{Q_hK_{g(h)}^T}{\sqrt{d_h}}+M\right)
-\]
+$$
 
-\[
+$$
 O_h=A_hV_{g(h)}
-\]
+$$
 
-The causal mask \(M\) prevents a position from seeing future tokens.
+The causal mask $M$ prevents a position from seeing future tokens.
 
 ## 2.2 Autoregressive Dependency
 
-\[
+$$
 p(x_{1:n})=\prod_{t=1}^{n}p(x_t\mid x_{<t})
-\]
+$$
 
-Within one sampled sequence, you must select token \(t\) before evaluating the path conditioned on it for token \(t+1\). You can parallelize:
+Within one sampled sequence, you must select token $t$ before evaluating the path conditioned on it for token $t+1$. You can parallelize:
 
 - Prompt positions during prefill
 - Different requests
@@ -305,25 +305,25 @@ You cannot ordinarily generate all future sampled positions in parallel.
 
 ### Attention FLOP convention
 
-Count one multiply and one add as two FLOPs. For batch \(B\), query length \(T_q\), key length \(T_k\), \(H_q\) query heads, and head size \(d_h\), the two attention matrix products require approximately:
+Count one multiply and one add as two FLOPs. For batch $B$, query length $T_q$, key length $T_k$, $H_q$ query heads, and head size $d_h$, the two attention matrix products require approximately:
 
-\[
+$$
 F_{attention}\approx4BH_qT_qT_kd_h
-\]
+$$
 
 For useful causal prefill work, only the lower triangle is valid:
 
-\[
-F_{causal\ prefill}\approx2BH_qT(T+1)d_h
-\]
+$$
+F_{\text{causal prefill}}\approx2BH_qT(T+1)d_h
+$$
 
-A kernel that evaluates the full square before masking can execute closer to \(4BH_qT^2d_h\).
+A kernel that evaluates the full square before masking can execute closer to $4BH_qT^2d_h$.
 
-For one decode step with current context \(S\):
+For one decode step with current context $S$:
 
-\[
-F_{decode\ attention}\approx4BH_qSd_h
-\]
+$$
+F_{\text{decode attention}}\approx4BH_qSd_h
+$$
 
 These figures exclude Q/K/V projections, output projection, feed-forward layers, normalization, softmax overhead, and non-matmul instructions. State whether a number is useful algorithmic work or executed kernel work.
 
@@ -371,7 +371,7 @@ Publish metric boundaries. “Latency” alone is ambiguous.
 
 Past keys and values do not change when one token is appended.
 
-Without a cache, step \(t\) recomputes K and V for all \(t\) positions. With a cache, it computes K and V only for the new token, then reads cached history.
+Without a cache, step $t$ recomputes K and V for all $t$ positions. With a cache, it computes K and V only for the new token, then reads cached history.
 
 ```mermaid
 flowchart TB
@@ -395,31 +395,31 @@ The cache removes redundant projection and layer computation. It does **not** ma
 
 For conventional per-layer K/V caches with uniform decoder layers:
 
-\[
+$$
 \boxed{M_{KV}=2BLSH_{kv}d_hb}
-\]
+$$
 
 where:
 
-- \(B\): cached sequences
-- \(L\): cached self-attention layers
-- \(S\): tokens per sequence
-- \(H_{kv}\): KV heads
-- \(d_h\): elements per KV head
-- \(b\): bytes per element
+- $B$: cached sequences
+- $L$: cached self-attention layers
+- $S$: tokens per sequence
+- $H_{kv}$: KV heads
+- $d_h$: elements per KV head
+- $b$: bytes per element
 - `2`: one K and one V
 
 Per token per sequence:
 
-\[
+$$
 \boxed{m_{KV/token}=2LH_{kv}d_hb}
-\]
+$$
 
 For unequal sequence lengths:
 
-\[
+$$
 M_{KV}=2LH_{kv}d_hb\sum_i S_i
-\]
+$$
 
 This is the logical payload. Physical memory also includes block padding, allocator alignment, quantization scales, block tables, temporary workspaces, and replication.
 
@@ -465,9 +465,9 @@ flowchart LR
 
 Relative logical KV memory:
 
-\[
+$$
 \frac{M_{GQA}}{M_{MHA}}=\frac{H_{kv}}{H_q}
-\]
+$$
 
 MQA/GQA can also reduce decode KV bandwidth. Under tensor parallelism, KV-head replication can reduce the ideal savings.
 
@@ -544,19 +544,19 @@ flowchart LR
     L2 --> BT --> P9
 ```
 
-It solves allocation and fragmentation problems. It does not make attention sparse and does not remove \(O(S)\) work for one full-attention decode step.
+It solves allocation and fragmentation problems. It does not make attention sparse and does not remove $O(S)$ work for one full-attention decode step.
 
-For block size \(C\), allocated token slots are:
+For block size $C$, allocated token slots are:
 
-\[
+$$
 \widetilde S_i=C\left\lceil\frac{S_i}{C}\right\rceil
-\]
+$$
 
 Tail waste per request is less than one block:
 
-\[
+$$
 0\le W_i<C\,m_{KV/token}
-\]
+$$
 
 Block-size trade-off:
 
@@ -592,9 +592,9 @@ Quantize K and V to reduce capacity and read traffic.
 
 Ideal reduction:
 
-\[
+$$
 \text{compression}\approx\frac{\text{native bits}}{\text{quantized bits}}
-\]
+$$
 
 Real savings are smaller because of scales, metadata, alignment, and sometimes a recent full-precision residual window.
 
@@ -620,9 +620,9 @@ flowchart LR
 
 Transfer lower bound:
 
-\[
-t_{transfer}\ge\frac{bytes}{effective\ bandwidth}
-\]
+$$
+t_{transfer}\ge\frac{\text{bytes}}{\text{effective bandwidth}}
+$$
 
 Offload is useful when avoided recomputation is more expensive than lookup and movement.
 
@@ -641,19 +641,19 @@ Prefetch and overlap are essential. The cache policy needs to predict reuse, not
 
 ## 3.7 Sliding Window And Bounded State
 
-For a sliding window \(W\), each sliding layer retains at most \(W\) recent positions. For equal-length sequences in a batch:
+For a sliding window $W$, each sliding layer retains at most $W$ recent positions. For equal-length sequences in a batch:
 
-\[
+$$
 M_{SWA}\le2BL_{SWA}WH_{kv}d_hb
-\]
+$$
 
 For unequal lengths:
 
-\[
+$$
 M_{SWA}=2L_{SWA}H_{kv}d_hb\sum_i\min(S_i,W)
-\]
+$$
 
-A circular buffer can store token \(t\) at \(t\bmod W\).
+A circular buffer can store token $t$ at $t\bmod W$.
 
 This bounds memory and attention work, but it is not exact full-context attention. Information may propagate through stacked layers, but old tokens are not directly available to every query.
 
@@ -691,7 +691,7 @@ The boxed formula in section 2.5 does not directly apply to latent-attention or 
 
 ## 4.1 FlashAttention
 
-Standard attention can materialize a \(T\times T\) score matrix in HBM. FlashAttention tiles Q, K, and V through on-chip SRAM and uses online softmax to avoid that materialization.
+Standard attention can materialize a $T\times T$ score matrix in HBM. FlashAttention tiles Q, K, and V through on-chip SRAM and uses online softmax to avoid that materialization.
 
 ```mermaid
 flowchart LR
@@ -731,11 +731,11 @@ Measure the fused kernel, not the number of kernels.
 
 ## 4.3 Quantization
 
-Memory for \(N\) parameters at \(b\) bytes per stored element:
+Memory for $N$ parameters at $b$ bytes per stored element:
 
-\[
+$$
 M_W\approx Nb+M_{scales}+M_{metadata}
-\]
+$$
 
 Quantization may improve:
 
@@ -924,17 +924,17 @@ The chunk size is an SLO policy, not a universal constant.
 
 At each step:
 
-\[
-\sum_i(cached_i+reserve_i)m_{KV/token}\le M_{KV\ pool}
-\]
+$$
+\sum_i(cached_i+reserve_i)m_{KV/token}\le M_{\text{KV pool}}
+$$
 
-\[
-\sum_i scheduled\_tokens_i\le token\_budget
-\]
+$$
+\sum_i \text{scheduled tokens}_i\le \text{token budget}
+$$
 
-\[
-active\_requests\le B_{max}
-\]
+$$
+\text{active requests}\le B_{max}
+$$
 
 Admission is hard because output length is unknown. Conservative reservation wastes capacity; optimistic admission may require preemption, recomputation, swapping, or rejection.
 
@@ -1069,20 +1069,20 @@ General engines are crowded and move quickly. Durable opportunities are more lik
 
 ## 6.3 Metrics A Founder Must Own
 
-\[
-cost\_per\_1M\_output=
-10^6\frac{fully\ loaded\ cost}{generated\ output\ tokens}
-\]
+$$
+\text{cost per 1M output}=
+10^6\frac{\text{fully loaded cost}}{\text{generated output tokens}}
+$$
 
-\[
-cost\_per\_good\_request=
-\frac{fully\ loaded\ cost}{requests\ meeting\ quality\ and\ SLO}
-\]
+$$
+\text{cost per good request}=
+\frac{\text{fully loaded cost}}{\text{requests meeting quality and SLO}}
+$$
 
-\[
-goodput\_per\_accelerator\_hour=
-\frac{good\ requests}{accelerator\ hours}
-\]
+$$
+\text{goodput per accelerator hour}=
+\frac{\text{good requests}}{\text{accelerator hours}}
+$$
 
 Fully loaded cost includes:
 
