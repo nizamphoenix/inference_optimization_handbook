@@ -790,7 +790,7 @@ sequenceDiagram
     D->>D: Propose gamma tokens cheaply
     D->>T: Candidate block
     T->>T: Verify candidates in one target pass
-    T-->>D: Accept prefix; correct rejection
+    T-->>D: Accept prefix and correct rejection
 ```
 
 For independent mean acceptance probability \(\alpha\), the expected number of accepted **draft** tokens is:
