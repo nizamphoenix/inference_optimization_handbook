@@ -796,16 +796,16 @@ sequenceDiagram
 For independent mean acceptance probability \(\alpha\), the expected number of accepted **draft** tokens is:
 
 \[
-E[accepted\ draft]=\frac{\alpha(1-\alpha^\gamma)}{1-\alpha}
+E[\text{accepted draft}]=\frac{\alpha(1-\alpha^\gamma)}{1-\alpha}
 \]
 
 The expected output progress per target verification, including the correction or bonus token, is:
 
 \[
-E[output\ progress]=\frac{1-\alpha^{\gamma+1}}{1-\alpha}
+E[\text{output progress}]=\frac{1-\alpha^{\gamma+1}}{1-\alpha}
 \]
 
-At \(\alpha=1\), use the limits \(E[accepted\ draft]=\gamma\) and \(E[output\ progress]=\gamma+1\).
+At \(\alpha=1\), use the limits \(E[\text{accepted draft}]=\gamma\) and \(E[\text{output progress}]=\gamma+1\).
 
 It reduces serial target calls, not necessarily FLOPs. It helps when:
 
